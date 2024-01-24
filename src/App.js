@@ -1,43 +1,86 @@
-import React, { useState } from "react";
-import Todo from "./TodoList.js";
+import { useState } from "react";
 
-function App() {
-  const [tasks, setTasks] = useState([]);
-  const [newTask, setNewTask] = useState("");
+const initialTasks = [
+  {
+    id: 1,
+    todo: "Complete React Tutorial",
+  },
+  {
+    id: 2,
+    todo: "Write CSS for Todo App",
+  },
+  {
+    id: 3,
+    todo: "Test and Debug the Application",
+  },
+];
 
-  const handleAddTask = () => {
-    if (newTask.trim() !== "") {
-      setTasks([...tasks, newTask]);
-      setNewTask("");
-    }
-  };
+export default function App() {
+  const [tasks, setTasks] = useState(initialTasks);
 
-  const handleDeleteTask = (index) => {
-    const updatedTasks = tasks.filter((_, i) => i !== index);
-    setTasks(updatedTasks);
-  };
-
-  const handleEditTask = (index, updatedTask) => {
-    const updatedTasks = [...tasks];
-    updatedTasks[index] = updatedTask;
-    setTasks(updatedTasks);
-  };
+  function handleNewTask(task) {
+    setTasks((tasks) => [...tasks, task]);
+  }
 
   return (
-    <div className="app">
-      <h1>My To-Do List</h1>
-      <div>
-        <input
-          type="text"
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          placeholder="Add a new task"
-        />
-        <button onClick={handleAddTask}>Add Task</button>
-      </div>
-      <Todo tasks={tasks} onDelete={handleDeleteTask} onEdit={handleEditTask} />
+    <div>
+      <Form onNewTask={handleNewTask} />
+      <Todo tasks={tasks} />
     </div>
   );
 }
 
-export default App;
+function Form({ onNewTask }) {
+  const [task, setTask] = useState("");
+
+  function handleSubmitTask(e) {
+    e.preventDefault();
+
+    if (task === "") return;
+
+    const newId = crypto.randomUUID();
+    const newTodo = { id: newId, todo: task };
+    onNewTask(newTodo);
+    setTask("");
+  }
+
+  return (
+    <div>
+      <h1>Todo List</h1>
+
+      <form onSubmit={handleSubmitTask}>
+        <label>Task</label>
+        <input
+          type="text"
+          value={task}
+          onChange={(e) => setTask(e.target.value)}
+        />
+        <Button>Add Task</Button>
+      </form>
+    </div>
+  );
+}
+
+function Todo({ tasks }) {
+  return (
+    <ul>
+      {tasks.map((task) => (
+        <List task={task} key={task.id} />
+      ))}
+    </ul>
+  );
+}
+
+function List({ task }) {
+  return (
+    <li>
+      {task.todo}
+      <Button className={"edit-btn"}>Edit</Button>
+      <Button className={"delete-btn"}>Delete</Button>
+    </li>
+  );
+}
+
+function Button({ children, className }) {
+  return <button className={className}>{children}</button>;
+}
