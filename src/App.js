@@ -18,19 +18,35 @@ const initialTasks = [
 export default function App() {
   const [tasks, setTasks] = useState(initialTasks);
 
-  function handleNewTask(task) {
+  function handleAddTask(task) {
     setTasks((tasks) => [...tasks, task]);
+  }
+
+  function handleDeleteTask(id) {
+    setTasks((tasks) => tasks.filter((item) => item.id !== id));
+  }
+
+  function handleEditTask(id, updatedTodo) {
+    setTasks((tasks) =>
+      tasks.map((task) =>
+        task.id === id ? { ...task, todo: updatedTodo } : task
+      )
+    );
   }
 
   return (
     <div>
-      <Form onNewTask={handleNewTask} />
-      <Todo tasks={tasks} />
+      <Form onAddTask={handleAddTask} />
+      <Todo
+        tasks={tasks}
+        onDeleteTask={handleDeleteTask}
+        onEditTask={handleEditTask}
+      />
     </div>
   );
 }
 
-function Form({ onNewTask }) {
+function Form({ onAddTask }) {
   const [task, setTask] = useState("");
 
   function handleSubmitTask(e) {
@@ -40,7 +56,7 @@ function Form({ onNewTask }) {
 
     const newId = crypto.randomUUID();
     const newTodo = { id: newId, todo: task };
-    onNewTask(newTodo);
+    onAddTask(newTodo);
     setTask("");
   }
 
@@ -61,26 +77,81 @@ function Form({ onNewTask }) {
   );
 }
 
-function Todo({ tasks }) {
+function Todo({ tasks, onDeleteTask, onEditTask }) {
   return (
     <ul>
       {tasks.map((task) => (
-        <List task={task} key={task.id} />
+        <List
+          task={task}
+          key={task.id}
+          onDeleteTask={onDeleteTask}
+          onEditTask={onEditTask}
+        />
       ))}
     </ul>
   );
 }
 
-function List({ task }) {
+function List({ task, onDeleteTask, onEditTask }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTask, setEditedTask] = useState(null);
+
+  function handleButtonClick(action) {
+    if (action === "edit") {
+      setEditedTask(task.todo);
+      setIsEditing(true);
+    } else if (action === "delete") {
+      onDeleteTask(task.id);
+    }
+  }
+
+  function handleSave() {
+    onEditTask(task.id, editedTask);
+    setIsEditing(false);
+  }
+
+  function handleCancel() {
+    setIsEditing(false);
+    setEditedTask(task.todo);
+  }
+
   return (
     <li>
-      {task.todo}
-      <Button className={"edit-btn"}>Edit</Button>
-      <Button className={"delete-btn"}>Delete</Button>
+      {isEditing ? (
+        <>
+          <input
+            type="text"
+            value={editedTask}
+            onChange={(e) => setEditedTask(e.target.value)}
+          />
+          <Button onClick={handleSave}>Save</Button>
+          <Button onClick={handleCancel}>Cancel</Button>
+        </>
+      ) : (
+        <>
+          {task.todo}
+          <Button
+            className={"edit-btn"}
+            onClick={() => handleButtonClick("edit")}
+          >
+            Edit
+          </Button>
+          <Button
+            className={"delete-btn"}
+            onClick={() => handleButtonClick("delete")}
+          >
+            Delete
+          </Button>
+        </>
+      )}
     </li>
   );
 }
 
-function Button({ children, className }) {
-  return <button className={className}>{children}</button>;
+function Button({ children, className, onClick }) {
+  return (
+    <button className={className} onClick={onClick}>
+      {children}
+    </button>
+  );
 }
